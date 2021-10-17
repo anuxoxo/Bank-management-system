@@ -19,6 +19,7 @@ public:
 	void modify();
 	void dep(int);
 	void draw(int);
+	void report() const;
 	int retacno() const;
 	int retbalance() const;
 	char rettype() const;
