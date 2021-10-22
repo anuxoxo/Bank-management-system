@@ -47,7 +47,7 @@ public:
 class Bank
 {
     int accno;
-    char name[50];
+    char firstName[30], lastName[30];
     long long int mobno;
     Address address;
     float balance;
@@ -67,8 +67,10 @@ public:
 void Bank::createAccount()
 {
     accno = generateAccno();
-    cout << "\n\nEnter your name : ";
-    cin >> name;
+    cout << "\n\nEnter your First Name : ";
+    cin >> firstName;
+    cout << "\n\nEnter your Last Name : ";
+    cin >> lastName;
     cout << "\n\nEnter your mobile number : ";
     cin >> mobno;
     cout << "\nEnter address : ";
@@ -88,7 +90,7 @@ void Bank::displayAccountDetails()
 {
     cout << "\nAccount No. : " << accno;
     cout << "\nAccount Holder Name : ";
-    cout << name;
+    cout << firstName<<" "<<lastName;
     cout << "\nMobile Number : " << mobno;
     address.showAddress();
     cout << "\nAccount type : " << accType;
@@ -115,8 +117,10 @@ void Bank::modifyDetails()
         switch (ch)
         {
         case 1:
-            cout << "\nEnter Name : ";
-            cin >> name;
+            cout << "\nEnter First Name : ";
+            cin >> firstName;
+            cout << "\nEnter Last Name : ";
+            cin >> lastName;
             break;
         case 2:
             cout << "\nEnter Mobile Number : ";
@@ -155,7 +159,7 @@ void Bank::withdrawAmt(int amt)
 
 void Bank::report()
 {
-    cout << accno << setw(10) << " " << name << setw(10) << " " << accType << setw(6) << balance << endl;
+    cout << accno << setw(10) << " " << firstName << setw(10) << lastName << setw(10) << " " << accType << setw(6) << balance << endl;
 }
 
 int Bank::returnAccno()
