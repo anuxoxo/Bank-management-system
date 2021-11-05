@@ -6,12 +6,12 @@ using namespace std;
 
 int generateAccno();
 void writeAccount();
-void readAccount(int);
-void modifyAccount(int);
-void deleteAccount(int);
+void readAccount(int, int);
+void modifyAccount(int, int);
+void deleteAccount(int, int);
 void display_all();
-void updateBalance(int, int);
-void transactionHistory(int);
+void updateBalance(int, int, int);
+void transactionHistory(int, int);
 
 class Address
 {
@@ -47,10 +47,11 @@ public:
 class Bank
 {
     int accno;
+    int pin;
     char firstName[30], lastName[30];
     long long int mobno;
     Address address;
-    float balance;
+    double balance;
     char accType[10];
 
 public:
@@ -62,6 +63,7 @@ public:
     void report();
     int returnAccno();
     int returnBal();
+    int returnPIN();
 };
 
 void Bank::createAccount()
@@ -75,10 +77,12 @@ void Bank::createAccount()
     cin >> mobno;
     cout << "\nEnter address : ";
     address.getAddress();
-    cout << "\n\nEnter account account type : ";
+    cout << "\n\nEnter account type : ";
     cin >> accType;
     cout << "\n\nEnter initial account balance : ";
     cin >> balance;
+    cout << "\n\n\nEnter your security pin : ";
+    cin >> pin;
 
     cout << "\n***********************************";
     cout << "\nACCOUNT CREATED!";
@@ -88,10 +92,11 @@ void Bank::createAccount()
 
 void Bank::displayAccountDetails()
 {
+    cout << "\n-------------------------------------------";
     cout << "\nAccount No. : " << accno;
     cout << "\nAccount Holder Name : ";
-    cout << firstName<<" "<<lastName;
-    cout << "\nMobile Number : " << mobno;
+    cout << firstName << " " << lastName;
+    cout << "\nMobile number : " << mobno;
     address.showAddress();
     cout << "\nAccount type : " << accType;
     cout << "\n-------------------------------------------";
@@ -109,7 +114,7 @@ void Bank::modifyDetails()
         cout << "\nMODIFY YOUR DETAILS ";
         cout << "\n-----------------------------";
         cout << "\n1. Name";
-        cout << "\n2. Mobile Number";
+        cout << "\n2. Mobile number";
         cout << "\n3. Address";
         cout << "\n\nEnter your choice : ";
         cin >> ch;
@@ -123,7 +128,7 @@ void Bank::modifyDetails()
             cin >> lastName;
             break;
         case 2:
-            cout << "\nEnter Mobile Number : ";
+            cout << "\nEnter Mobile number : ";
             cin >> mobno;
             break;
         case 3:
@@ -135,7 +140,7 @@ void Bank::modifyDetails()
             cout << "\nINVALID CHOICE!";
             break;
         }
-        cout << "\nDo you want to modify again? (y/n)";
+        cout << "\nDo you want to modify again? (y/n) : ";
         cin >> choice;
 
     } while (choice == 'y' || choice == 'Y');
@@ -159,7 +164,7 @@ void Bank::withdrawAmt(int amt)
 
 void Bank::report()
 {
-    cout << accno << setw(10) << " " << firstName << setw(10) << lastName << setw(10) << " " << accType << setw(6) << balance << endl;
+    cout << accno << "\t\t" << firstName << "  " << lastName << "\t" << accType << "\t\t" << balance << endl;
 }
 
 int Bank::returnAccno()
@@ -172,9 +177,14 @@ int Bank::returnBal()
     return balance;
 }
 
+int Bank::returnPIN()
+{
+    return pin;
+}
+
 int main()
 {
-    int ch, num;
+    int ch, acc, pin;
     do
     {
         cout << "\n*************************\n";
@@ -186,7 +196,7 @@ int main()
         cout << "\n2. Deposit amount";
         cout << "\n3. Withdraw amount";
         cout << "\n4. Check balance";
-        cout << "\n5. ALL Bank HOLDER LIST";
+        cout << "\n5. All Bank Holders List";
         cout << "\n6. Close an account";
         cout << "\n7. Modify account details";
         cout << "\n8. EXIT";
@@ -200,41 +210,51 @@ int main()
             break;
         case 2:
             cout << "\n\nEnter accno : ";
-            cin >> num;
-            updateBalance(num, 1);
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            updateBalance(acc, 1, pin);
             break;
         case 3:
             cout << "\n\nEnter accno : ";
-            cin >> num;
-            updateBalance(num, 2);
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            updateBalance(acc, 2, pin);
             break;
         case 4:
             cout << "\n\nEnter accno : ";
-            cin >> num;
-            readAccount(num);
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            readAccount(acc, pin);
             break;
         case 5:
             display_all();
             break;
         case 6:
             cout << "\n\nEnter accno : ";
-            cin >> num;
-            deleteAccount(num);
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            deleteAccount(acc, pin);
             break;
         case 7:
             cout << "\n\nEnter accno : ";
-            cin >> num;
-            modifyAccount(num);
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            modifyAccount(acc, pin);
             break;
         case 8:
             cout << "\n*********************************\n";
             cout << "THANK YOU, SEE YOU NEXT TIME!";
             cout << "\n*********************************\n";
-            return;
             break;
         default:
             cout << "\n\nINVALID CHOICE!";
         }
+
         cin.ignore();
         cout << "\nPress any key to continue..." << endl;
         cin.get();
@@ -243,7 +263,7 @@ int main()
 
     return 0;
 }
-void transactionHistory(int)
+void transactionHistory(int accno, int pin)
 {
 }
 
@@ -281,11 +301,11 @@ void writeAccount()
     fout.close();
 }
 
-void readAccount(int n)
+void readAccount(int n, int pin)
 {
     Bank b;
     int flag = 0;
-    ifstream fin("accounts.dat", ios::binary);
+    ifstream fin("accounts.dat", ios::binary | ios::in);
 
     if (!fin)
     {
@@ -298,10 +318,10 @@ void readAccount(int n)
 
     while (fin.read((char *)&b, sizeof(b)))
     {
-        if (b.returnAccno() == n)
+        if (b.returnAccno() == n && b.returnPIN() == pin)
         {
-            b.displayAccountDetails();
             flag = 1;
+            b.displayAccountDetails();
         }
     }
 
@@ -310,13 +330,13 @@ void readAccount(int n)
     if (!flag)
     {
         cout << "\n*****************************";
-        cout << "\nBank number does not exist!";
+        cout << "\nINVALID DETAILS!";
         cout << "\n*****************************";
         ;
     }
 }
 
-void modifyAccount(int n)
+void modifyAccount(int n, int pin)
 {
     int found = 0;
     Bank b;
@@ -330,15 +350,16 @@ void modifyAccount(int n)
         cout << "\n*****************************";
         return;
     }
-    while (!fio.eof() && !found)
-    {
-        fio.read((char *)&b, sizeof(b));
 
+    while (fio.read((char *)&b, sizeof(b)) && !found)
+    {
         if (b.returnAccno() == n)
         {
+            found = 1;
+
             b.displayAccountDetails();
 
-            cout << "\n\nEnter The New Details of Bank";
+            cout << "\n\nEnter the new details : ";
             b.modifyDetails();
 
             int pos = (-1) * (sizeof(b));
@@ -348,8 +369,6 @@ void modifyAccount(int n)
             cout << "\n*****************************";
             cout << "\nRecord Updated";
             cout << "\n*****************************";
-
-            found = 1;
         }
     }
 
@@ -358,16 +377,17 @@ void modifyAccount(int n)
     if (!found)
     {
         cout << "\n*****************************";
-        cout << "\nRecord Not found!!!!";
+        cout << "\nINVALID DETAILS!!!!";
         cout << "\n*****************************";
     }
 }
 
-void deleteAccount(int n)
+void deleteAccount(int n, int pin)
 {
     Bank b;
     ifstream fin;
     ofstream fout;
+    int flag = 0;
 
     fin.open("accounts.dat", ios::binary);
     if (!fin)
@@ -387,17 +407,31 @@ void deleteAccount(int n)
         {
             fout.write((char *)&b, sizeof(b));
         }
+        else if (b.returnAccno() == n && b.returnPIN() == pin)
+        {
+            flag = 1;
+        }
     }
 
     fin.close();
     fout.close();
 
-    remove("accounts.dat");
-    rename("Temp.dat", "accounts.dat");
+    if (flag)
+    {
+        remove("accounts.dat");
+        rename("Temp.dat", "accounts.dat");
 
-    cout << "\n*****************************";
-    cout << "\nRecord Deleted";
-    cout << "\n*****************************";
+        cout << "\n*****************************";
+        cout << "\nRecord Deleted";
+        cout << "\n*****************************";
+    }
+    else
+    {
+        remove("Temp.dat");
+        cout << "\n*****************************";
+        cout << "\nINVALID DETAILS!";
+        cout << "\n*****************************";
+    }
 }
 
 void display_all()
@@ -414,10 +448,10 @@ void display_all()
         return;
     }
 
-    cout << "\n\nBank HOLDER LIST\n\n";
-    cout << "====================================================\n";
-    cout << "A/c no.      NAME           accType  Balance\n";
-    cout << "====================================================\n";
+    cout << "\n\nBank Holder List\n\n";
+    cout << "==================================================================\n";
+    cout << "A/c no.\t\t   Name\t\taccType\t\tBalance\n";
+    cout << "==================================================================\n";
     while (fin.read((char *)&b, sizeof(b)))
     {
         b.report();
@@ -425,7 +459,7 @@ void display_all()
     fin.close();
 }
 
-void updateBalance(int n, int choice)
+void updateBalance(int n, int choice, int pin)
 {
     int amt, found = 0;
     Bank b;
@@ -439,11 +473,13 @@ void updateBalance(int n, int choice)
         ;
         return;
     }
-    while (!fio.eof() && found == false)
+    while (!fio.eof() && !found)
     {
         fio.read((char *)&b, sizeof(b));
-        if (b.returnAccno() == n)
+        if (b.returnAccno() == n && b.returnPIN() == pin)
         {
+            found = 1;
+
             b.displayAccountDetails();
             if (choice == 1)
             {
@@ -467,14 +503,12 @@ void updateBalance(int n, int choice)
                 else
                     b.withdrawAmt(amt);
             }
-            
+
             int pos = (-1) * (sizeof(b));
             fio.seekp(pos, ios::cur);
             fio.write((char *)&b, sizeof(b));
 
             cout << "\n\nRecord Updated";
-
-            found = 1;
         }
     }
     fio.close();
