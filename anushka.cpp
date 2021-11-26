@@ -1,7 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <cctype>
+#include <ctime>
 #include <iomanip>
+#include <string.h>
 using namespace std;
 
 int generateAccno();
@@ -9,9 +11,10 @@ void writeAccount();
 void readAccount(int, int);
 void modifyAccount(int, int);
 void deleteAccount(int, int);
-void display_all();
+void displayAll();
 void updateBalance(int, int, int);
-void transactionHistory(int, int);
+void writeTransaction(int, double, int);
+void showTransactionHistory(int, int);
 
 class Address
 {
@@ -41,6 +44,36 @@ public:
         state[0] = toupper(state[0]);
 
         cout << "\nAddress : " << locality << " , " << city << " , " << state << " , Pincode - " << pincode;
+    }
+};
+
+class Transaction
+{
+    char type[15];
+    double amt;
+    int accno;
+
+public:
+    void enter(int accno, double amt, int choice)
+    {
+        this->accno = accno;
+        this->amt = amt;
+
+        if (choice == 1)
+        {
+            strcpy(type, "Deposit");
+        }
+        else if (choice == 2)
+        {
+            strcpy(type, "Withdrawal");
+        }
+    }
+
+    void display()
+    {
+
+        cout << "\n"
+             << accno << setw(15) << type << setw(15) << amt;
     }
 };
 
@@ -164,7 +197,7 @@ void Bank::withdrawAmt(int amt)
 
 void Bank::report()
 {
-    cout << accno << "\t\t" << firstName << "  " << lastName << "\t" << accType << "\t\t" << balance << endl;
+    cout << accno << setw(15) << firstName << setw(15) << lastName << setw(15) << accType << setw(15) << balance << endl;
 }
 
 int Bank::returnAccno()
@@ -196,11 +229,12 @@ int main()
         cout << "\n2. Deposit amount";
         cout << "\n3. Withdraw amount";
         cout << "\n4. Check balance";
-        cout << "\n5. All Bank Holders List";
+        cout << "\n5. Display All Bank Holders List";
         cout << "\n6. Close an account";
         cout << "\n7. Modify account details";
-        cout << "\n8. EXIT";
-        cout << "\n\nEnter your choice (1-8): ";
+        cout << "\n8. Show Transaction History";
+        cout << "\n9. EXIT";
+        cout << "\n\nEnter your choice (1-9): ";
         cin >> ch;
 
         switch (ch)
@@ -230,7 +264,7 @@ int main()
             readAccount(acc, pin);
             break;
         case 5:
-            display_all();
+            displayAll();
             break;
         case 6:
             cout << "\n\nEnter accno : ";
@@ -246,7 +280,15 @@ int main()
             cin >> pin;
             modifyAccount(acc, pin);
             break;
+
         case 8:
+            cout << "\n\nEnter accno : ";
+            cin >> acc;
+            cout << "\n\nEnter pin : ";
+            cin >> pin;
+            showTransactionHistory(acc, pin);
+            break;
+        case 9:
             cout << "\n*********************************\n";
             cout << "THANK YOU, SEE YOU NEXT TIME!";
             cout << "\n*********************************\n";
@@ -259,20 +301,20 @@ int main()
         cout << "\nPress any key to continue..." << endl;
         cin.get();
 
-    } while (ch != 8);
+    } while (ch != 9);
 
     return 0;
-}
-void transactionHistory(int accno, int pin)
-{
 }
 
 int generateAccno()
 {
+    srand(time(0));
+
     Bank b;
     int flag = 0, n;
     do
     {
+        flag = 0;
         n = rand() % 10000 + 1000;
 
         ifstream fin("accounts.dat", ios::binary);
@@ -341,9 +383,9 @@ void modifyAccount(int n, int pin)
     int found = 0;
     Bank b;
 
-    fstream fio("accounts.dat", ios::binary | ios::in | ios::out);
+    fstream fin("accounts.dat", ios::binary | ios::in | ios::out);
 
-    if (!fio)
+    if (!fin)
     {
         cout << "\n*****************************";
         cout << "\nFILE NOT found !!!";
@@ -351,7 +393,7 @@ void modifyAccount(int n, int pin)
         return;
     }
 
-    while (fio.read((char *)&b, sizeof(b)) && !found)
+    while (fin.read((char *)&b, sizeof(b)) && !found)
     {
         if (b.returnAccno() == n)
         {
@@ -363,16 +405,16 @@ void modifyAccount(int n, int pin)
             b.modifyDetails();
 
             int pos = (-1) * (sizeof(b));
-            fio.seekp(pos, ios::cur);
+            fin.seekp(pos, ios::cur);
 
-            fio.write((char *)&b, sizeof(b));
+            fin.write((char *)&b, sizeof(b));
             cout << "\n*****************************";
             cout << "\nRecord Updated";
             cout << "\n*****************************";
         }
     }
 
-    fio.close();
+    fin.close();
 
     if (!found)
     {
@@ -401,6 +443,7 @@ void deleteAccount(int n, int pin)
     fout.open("temp.dat", ios::binary);
 
     fin.seekg(0, ios::beg);
+
     while (fin.read((char *)&b, sizeof(b)))
     {
         if (b.returnAccno() != n)
@@ -434,7 +477,7 @@ void deleteAccount(int n, int pin)
     }
 }
 
-void display_all()
+void displayAll()
 {
     Bank b;
     ifstream fin;
@@ -449,9 +492,9 @@ void display_all()
     }
 
     cout << "\n\nBank Holder List\n\n";
-    cout << "==================================================================\n";
-    cout << "A/c no.\t\t   Name\t\taccType\t\tBalance\n";
-    cout << "==================================================================\n";
+    cout << "=======================================================================\n";
+    cout << " A/c no." << setw(15) << "First Name" << setw(15) << "Last Name" << setw(15) << "accType" << setw(15) << "Balance\n";
+    cout << "=======================================================================\n";
     while (fin.read((char *)&b, sizeof(b)))
     {
         b.report();
@@ -461,21 +504,22 @@ void display_all()
 
 void updateBalance(int n, int choice, int pin)
 {
-    int amt, found = 0;
+    int found = 0;
+    double amt;
     Bank b;
 
-    fstream fio("accounts.dat", ios::binary | ios::in | ios::out);
-    if (!fio)
+    fstream fin("accounts.dat", ios::binary | ios::in | ios::out);
+    if (!fin)
     {
         cout << "\n*****************************";
         cout << "\nFILE NOT found !!!";
         cout << "\n*****************************";
-        ;
         return;
     }
-    while (!fio.eof() && !found)
+
+    while (!fin.eof() && !found)
     {
-        fio.read((char *)&b, sizeof(b));
+        fin.read((char *)&b, sizeof(b));
         if (b.returnAccno() == n && b.returnPIN() == pin)
         {
             found = 1;
@@ -505,19 +549,80 @@ void updateBalance(int n, int choice, int pin)
             }
 
             int pos = (-1) * (sizeof(b));
-            fio.seekp(pos, ios::cur);
-            fio.write((char *)&b, sizeof(b));
+            fin.seekp(pos, ios::cur);
+            fin.write((char *)&b, sizeof(b));
 
-            cout << "\n\nRecord Updated";
+            cout << "\n\nRecord Updated!";
+
+            writeTransaction(n, amt, choice);
         }
     }
-    fio.close();
+    fin.close();
 
     if (!found)
     {
         cout << "\n*****************************";
         cout << "\nRecord Not found ";
         cout << "\n*****************************";
-        ;
+    }
+}
+
+void writeTransaction(int accno, double amt, int choice)
+{
+    string filename = to_string(accno);
+    filename = filename + ".dat";
+    ofstream fout(filename, ios ::binary | ios::app);
+
+    Transaction t;
+    t.enter(accno, amt, choice);
+
+    fout.write((char *)&t, sizeof(t));
+}
+
+void showTransactionHistory(int n, int pin)
+{
+    int found = 0;
+    Bank b;
+    ifstream fin("accounts.dat", ios::binary | ios::in);
+    if (!fin)
+    {
+        cout << "\n*****************************";
+        cout << "\nFILE NOT found !!!";
+        cout << "\n*****************************";
+        return;
+    }
+
+    while (!fin.eof() && !found)
+    {
+        fin.read((char *)&b, sizeof(b));
+        if (b.returnAccno() == n && b.returnPIN() == pin)
+        {
+            found = 1;
+            break;
+        }
+    }
+    fin.close();
+
+    if (!found)
+    {
+        cout << "\n*****************************";
+        cout << "\nRecord Not found ";
+        cout << "\n*****************************";
+    }
+    else
+    {
+        Transaction t;
+
+        string filename = to_string(n);
+        filename = filename + ".dat";
+        ifstream ftrans_In(filename, ios::binary | ios::in);
+        cout << "\nAccno" << setw(15) << "Type" << setw(15) << "Amount";
+        cout << "\n=============================================\n";
+
+        while (ftrans_In.read((char *)&t, sizeof(t)))
+        {
+            t.display();
+        }
+        cout << endl;
     }
 }
